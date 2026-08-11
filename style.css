@@ -1,0 +1,173 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logout {
+    color: #d9534f;
+    text-decoration: none;
+}
+
+.actions {
+    margin: 20px 0;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #5cb85c;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.btn-clear {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #ddd;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.filters {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.filters select {
+    padding: 4px;
+    margin-right: 10px;
+}
+
+.task-list .task-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-item.completed {
+    background: #f0f0f0;
+    opacity: 0.7;
+}
+
+.task-item.completed .task-info h3 {
+    text-decoration: line-through;
+}
+
+.task-info h3 {
+    margin: 0 0 5px 0;
+}
+
+.task-info p {
+    margin: 0 0 5px 0;
+    color: #666;
+}
+
+.priority {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.priority-high { background: #f2dede; color: #a94442; }
+.priority-medium { background: #fcf8e3; color: #8a6d3b; }
+.priority-low { background: #d9edf7; color: #31708f; }
+
+.due-date {
+    font-size: 0.9em;
+    color: #777;
+    margin-right: 10px;
+}
+
+.status {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.task-actions a {
+    margin-left: 10px;
+    text-decoration: none;
+    color: #337ab7;
+}
+
+.task-actions .delete {
+    color: #d9534f;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    min-height: 80px;
+}
+
+.error {
+    color: #d9534f;
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+button[type="submit"] {
+    background: #5cb85c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background: #449d44;
+}
+
+a {
+    color: #337ab7;
+}
