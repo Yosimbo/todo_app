@@ -4,12 +4,19 @@ require_once 'functions.php';
 
 require_login();
 
-$task_id = $_GET['id'] ?? 0;
+$task_id = (int)($_GET['id'] ?? 0);
 $user_id = $_SESSION['user_id'];
-$task = getTask($task_id, $user_id);
 
+if (!$task_id) {
+    $_SESSION['flash'] = 'Invalid task ID.';
+    header('Location: index.php');
+    exit;
+}
+
+$task = getTask($task_id, $user_id);
 if (!$task) {
-    header('Location: dashboard.php');
+    $_SESSION['flash'] = 'Task not found.';
+    header('Location: index.php');
     exit;
 }
 
@@ -28,30 +35,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         if (updateTask($task_id, $user_id, $title, $description, $due_date ?: null, $priority)) {
-            $_SESSION['flash'] = 'Task updated!';
-            header('Location: dashboard.php');
+            $_SESSION['flash'] = 'Task updated successfully!';
+            header('Location: index.php');
             exit;
         } else {
-            $errors['general'] = 'Failed to update task.';
+            $errors['general'] = 'Failed to update task. Please try again.';
         }
     }
 }
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Edit Task</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <h2>Edit Task</h2>
-        <?php if (!empty($errors['general'])): ?><div class="error"><?= e($errors['general']) ?></div><?php endif; ?>
+        <?php if (!empty($errors['general'])): ?>
+            <div class="error"><?= e($errors['general']) ?></div>
+        <?php endif; ?>
         <form method="post">
             <div class="form-group">
                 <label>Title *</label>
                 <input type="text" name="title" value="<?= e($old['title'] ?? $task['title']) ?>" required>
-                <?php if (isset($errors['title'])): ?><span class="error"><?= e($errors['title']) ?></span><?php endif; ?>
+                <?php if (isset($errors['title'])): ?>
+                    <span class="error"><?= e($errors['title']) ?></span>
+                <?php endif; ?>
             </div>
             <div class="form-group">
                 <label>Description</label>
@@ -70,8 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
             <button type="submit">Update Task</button>
-            <a href="dashboard.php">Cancel</a>
+            <a href="index.php" class="btn-clear">Cancel</a>
         </form>
     </div>
 </body>
+
 </html>

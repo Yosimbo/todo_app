@@ -2,16 +2,6 @@
 require_once 'config.php';
 
 /**
- * Get user by username or email (for login)
- */
-// function getUserByLogin($login) {
-//     global $pdo;
-//     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :login OR email = :login");
-//     $stmt->execute(['login' => $login]);
-//     return $stmt->fetch();
-// }
-
-/**
  * Get all tasks for a user with optional filters
  */
 function getTasks($user_id, $priority = null, $status = null) {
@@ -44,7 +34,12 @@ function getTasks($user_id, $priority = null, $status = null) {
 function createTask($user_id, $title, $description, $due_date, $priority) {
     global $pdo;
     $stmt = $pdo->prepare("INSERT INTO tasks (user_id, title, description, due_date, priority) VALUES (?, ?, ?, ?, ?)");
-    return $stmt->execute([$user_id, $title, $description, $due_date, $priority]);
+    try {
+        return $stmt->execute([$user_id, $title, $description, $due_date, $priority]);
+    } catch (PDOException $e) {
+        error_log("Error creating task: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**
@@ -56,6 +51,27 @@ function getTask($task_id, $user_id) {
     $stmt->execute([$task_id, $user_id]);
     return $stmt->fetch();
 }
+
+/**
+ * Get a single deleted task by ID (and verify ownership)
+ */
+function getTask1($task_id, $user_id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM delete_tasks WHERE id = ? AND user_id = ?");
+    $stmt->execute([$task_id, $user_id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get all deleted tasks for a user
+ */
+function getAllDeletedTasks($user_id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM delete_tasks WHERE user_id = ? ORDER BY id DESC");
+    $stmt->execute([$user_id]);
+    return $stmt->fetchAll();
+}
+
 
 /**
  * Update task
@@ -76,10 +92,89 @@ function toggleTask($task_id, $user_id) {
 }
 
 /**
- * Delete task
+ * Delete task (moves to delete_tasks table)
  */
 function deleteTask($task_id, $user_id) {
     global $pdo;
-    $stmt = $pdo->prepare("DELETE FROM tasks WHERE id = ? AND user_id = ?");
-    return $stmt->execute([$task_id, $user_id]);
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Get the task to archive
+        $stmt = $pdo->prepare("SELECT * FROM tasks WHERE id = ? AND user_id = ?");
+        $stmt->execute([$task_id, $user_id]);
+        $task = $stmt->fetch();
+        
+        if (!$task) {
+            $pdo->rollBack();
+            return false;
+        }
+        
+        // Archive to delete_tasks table
+        $stmt = $pdo->prepare("INSERT INTO delete_tasks (user_id, title, description, due_date, priority) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $task['title'], $task['description'], $task['due_date'], $task['priority']]);
+        
+        // Delete from tasks table
+        $stmt = $pdo->prepare("DELETE FROM tasks WHERE id = ? AND user_id = ?");
+        $stmt->execute([$task_id, $user_id]);
+        
+        $pdo->commit();
+        return true;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Error deleting task: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Restore task (moves from delete_tasks back to tasks table)
+ */
+function restoreTask($task_id, $user_id) {
+    global $pdo;
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Get the deleted task
+        $stmt = $pdo->prepare("SELECT * FROM delete_tasks WHERE id = ? AND user_id = ?");
+        $stmt->execute([$task_id, $user_id]);
+        $task = $stmt->fetch();
+        
+        if (!$task) {
+            $pdo->rollBack();
+            return false;
+        }
+        
+        // Restore to tasks table
+        $stmt = $pdo->prepare("INSERT INTO tasks (user_id, title, description, due_date, priority) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $task['title'], $task['description'], $task['due_date'], $task['priority']]);
+        
+        // Remove from delete_tasks table
+        $stmt = $pdo->prepare("DELETE FROM delete_tasks WHERE id = ? AND user_id = ?");
+        $stmt->execute([$task_id, $user_id]);
+        
+        $pdo->commit();
+        return true;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Error restoring task: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Permanently delete task from delete_tasks table
+ */
+function permanentDeleteTask($task_id, $user_id) {
+    global $pdo;
+    
+    try {
+        $stmt = $pdo->prepare("DELETE FROM delete_tasks WHERE id = ? AND user_id = ?");
+        $stmt->execute([$task_id, $user_id]);
+        return $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        error_log("Error permanently deleting task: " . $e->getMessage());
+        return false;
+    }
 }

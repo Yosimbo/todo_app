@@ -4,19 +4,27 @@ require_once 'functions.php';
 
 require_login();
 
-$task_id = $_GET['id'] ?? 0;
+$task_id = (int)($_GET['id'] ?? 0);
 $csrf = $_GET['csrf'] ?? '';
 
+if (!$task_id) {
+    $_SESSION['flash'] = 'Invalid task ID.';
+    header('Location: index.php');
+    exit;
+}
+
 if (!verify_csrf($csrf)) {
-    die('Invalid request.');
+    $_SESSION['flash'] = 'Invalid request.';
+    header('Location: index.php');
+    exit;
 }
 
 $user_id = $_SESSION['user_id'];
 if (deleteTask($task_id, $user_id)) {
-    $_SESSION['flash'] = 'Task deleted.';
+    $_SESSION['flash'] = 'Task deleted successfully.';
 } else {
     $_SESSION['flash'] = 'Failed to delete task.';
 }
 
-header('Location: dashboard.php');
+header('Location: index.php');
 exit;

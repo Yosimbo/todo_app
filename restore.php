@@ -9,22 +9,22 @@ $csrf = $_GET['csrf'] ?? '';
 
 if (!$task_id) {
     $_SESSION['flash'] = 'Invalid task ID.';
-    header('Location: index.php');
+    header('Location: trash.php');
     exit;
 }
 
 if (!verify_csrf($csrf)) {
     $_SESSION['flash'] = 'Invalid request.';
-    header('Location: index.php');
+    header('Location: trash.php');
     exit;
 }
 
 $user_id = $_SESSION['user_id'];
-if (toggleTask($task_id, $user_id)) {
-    $_SESSION['flash'] = 'Task status updated.';
+if (restoreTask($task_id, $user_id)) {
+    $_SESSION['flash'] = 'Task restored successfully.';
 } else {
-    $_SESSION['flash'] = 'Failed to update task status.';
+    $_SESSION['flash'] = 'Failed to restore task.';
 }
 
-header('Location: index.php');
+header('Location: trash.php');
 exit;

@@ -6,6 +6,7 @@ require_login();
 
 $errors = [];
 $old = $_POST;
+$user_id = $_SESSION['user_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
@@ -18,31 +19,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        if (createTask($_SESSION['user_id'], $title, $description, $due_date ?: null, $priority)) {
-            $_SESSION['flash'] = 'Task created!';
-            header('Location: dashboard.php');
+        if (createTask($user_id, $title, $description, $due_date ?: null, $priority)) {
+            $_SESSION['flash'] = 'Task created successfully!';
+            header('Location: index.php');
             exit;
         } else {
-            $errors['general'] = 'Failed to create task.';
+            $errors['general'] = 'Failed to create task. Please try again.';
         }
     }
 }
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Add Task</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <h2>Add New Task</h2>
-        <?php if (!empty($errors['general'])): ?><div class="error"><?= e($errors['general']) ?></div><?php endif; ?>
+        <?php if (!empty($errors['general'])): ?>
+            <div class="error"><?= e($errors['general']) ?></div>
+        <?php endif; ?>
         <form method="post">
             <div class="form-group">
                 <label>Title *</label>
                 <input type="text" name="title" value="<?= e($old['title'] ?? '') ?>" required>
-                <?php if (isset($errors['title'])): ?><span class="error"><?= e($errors['title']) ?></span><?php endif; ?>
+                <?php if (isset($errors['title'])): ?>
+                    <span class="error"><?= e($errors['title']) ?></span>
+                <?php endif; ?>
             </div>
             <div class="form-group">
                 <label>Description</label>
@@ -61,8 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
             <button type="submit">Save Task</button>
-            <a href="dashboard.php">Cancel</a>
+            <a href="index.php" class="btn-clear">Cancel</a>
         </form>
     </div>
 </body>
+
 </html>

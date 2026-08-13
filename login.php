@@ -1,39 +1,45 @@
 <?php
 require_once 'config.php';
 
-
 $errors = [];
-$login = "";
+$login = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if (empty($login) || empty($password)) {
-        $errors['general'] = 'Invalid username/email or password.';
+        $errors['general'] = 'Please enter both username/email and password.';
     } else {
-    global $pdo;
-    $stmt = $pdo->prepare("SELECT * FROM  users WHERE email = ? OR username = ?");
-    $stmt->execute([$login, $login]);
-    $user = $stmt->fetch();
+        try {
+            global $pdo;
+            $stmt = $pdo->prepare("SELECT id, username, password_hash FROM users WHERE email = ? OR username = ?");
+            $stmt->execute([$login, $login]);
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            header('Location: dashboard.php');
-            exit;
-        } else {
-            $errors['general'] = 'Invalid username/email or password.';
+            if ($user && password_verify($password, $user['password_hash'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                header('Location: index.php');
+                exit;
+            } else {
+                $errors['general'] = 'Invalid username/email or password.';
+            }
+        } catch (PDOException $e) {
+            error_log("Login error: " . $e->getMessage());
+            $errors['general'] = 'An error occurred. Please try again.';
         }
     }
 }
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <h2>Log In</h2>
@@ -43,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="post">
             <div class="form-group">
                 <label>Username or Email</label>
-                <input type="text" name="login" value="<?= e($_POST['login'] ?? '') ?>" required>
+                <input type="text" name="login" value="<?= e($login) ?>" required>
             </div>
             <div class="form-group">
                 <label>Password</label>
@@ -54,4 +60,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p>No account? <a href="signup.php">Sign Up</a></p>
     </div>
 </body>
+
 </html>

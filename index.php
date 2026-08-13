@@ -8,19 +8,26 @@ $user_id = $_SESSION['user_id'];
 $priority = $_GET['priority'] ?? 'all';
 $status   = $_GET['status'] ?? 'all';
 
+// Get flash message and clear it
+$flash_message = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
+
 // Get tasks
 $tasks = getTasks($user_id, $priority, $status);
-
-// Handle toggle via GET (simple, with CSRF check later in toggle.php)
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>My Tasks</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
+        <?php if ($flash_message): ?>
+            <div class="error"><?= e($flash_message) ?></div>
+        <?php endif; ?>
         <div class="header">
             <h2>Welcome, <?= e($_SESSION['username']) ?></h2>
             <a href="logout.php" class="logout">Logout</a>
@@ -28,6 +35,7 @@ $tasks = getTasks($user_id, $priority, $status);
 
         <div class="actions">
             <a href="add_task.php" class="btn">+ Add Task</a>
+            <a href="trash.php" class="btn">Trash</a>
         </div>
 
         <!-- Filters -->
@@ -49,7 +57,7 @@ $tasks = getTasks($user_id, $priority, $status);
                 </select>
 
                 <button type="submit">Filter</button>
-                <a href="dashboard.php" class="btn-clear">Clear Filters</a>
+                <a href="index.php" class="btn-clear">Clear Filters</a>
             </form>
         </div>
 
@@ -58,21 +66,26 @@ $tasks = getTasks($user_id, $priority, $status);
             <?php if (empty($tasks)): ?>
                 <p>No tasks found.</p>
             <?php else: ?>
-                <?php foreach ($tasks as $task): ?>
-                    <div class="task-item <?= $task['completed'] ? 'completed' : '' ?>">
+                <?php foreach ($tasks as $task): 
+                    $priority_class = strtolower($task['priority']);
+                    $is_completed = $task['completed'];
+                    $csrf = csrf_token();
+                ?>
+                    <div class="task-item <?= $is_completed ? 'completed' : '' ?>">
                         <div class="task-info">
                             <h3><?= e($task['title']) ?></h3>
                             <p><?= e($task['description']) ?></p>
-                            <span class="priority priority-<?= strtolower($task['priority']) ?>"><?= e($task['priority']) ?></span>
+                            <span class="priority priority-<?= $priority_class ?>"><?= e($task['priority']) ?></span>
                             <span class="due-date">Due: <?= $task['due_date'] ? e($task['due_date']) : 'No date' ?></span>
-                            <span class="status"><?= $task['completed'] ? '✓ Completed' : '◻ Incomplete' ?></span>
+                            <span class="status"><?= $is_completed ? '✓ Completed' : '◻ Incomplete' ?></span>
                         </div>
                         <div class="task-actions">
-                            <a href="toggle_complete.php?id=<?= $task['id'] ?>&csrf=<?= csrf_token() ?>" class="toggle">
-                                <?= $task['completed'] ? 'Undo' : 'Complete' ?>
+                            <a href="toggle_complete.php?id=<?= $task['id'] ?>&csrf=<?= $csrf ?>" class="toggle">
+                                <?= $is_completed ? 'Undo' : 'Complete' ?>
                             </a>
                             <a href="edit_task.php?id=<?= $task['id'] ?>" class="edit">Edit</a>
-                            <a href="delete_task.php?id=<?= $task['id'] ?>&csrf=<?= csrf_token() ?>" class="delete" onclick="return confirm('Delete this task?')">Delete</a>
+                            <a href="delete_task.php?id=<?= $task['id'] ?>&csrf=<?= $csrf ?>" class="delete"
+                                onclick="return confirm('Delete this task?')">Delete</a>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -80,4 +93,5 @@ $tasks = getTasks($user_id, $priority, $status);
         </div>
     </div>
 </body>
+
 </html>
